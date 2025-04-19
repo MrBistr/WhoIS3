@@ -1,4 +1,5 @@
 import { saveToStorage, getFromStorage } from './storage.js';
+import { getRandomBrightColor } from './nodes.js';
 
 const nodesContainer = document.getElementById('nodes-container');
 export function getGroups() {
@@ -7,10 +8,8 @@ export function getGroups() {
 export function setGroups(groups) {
     saveToStorage('groups', groups);
 }
-const groupColors = [
-    "#e76fd1","#7d6cf6","#6d65c4","#a181f8","#b48ffa"
-];
 export function createGroupDOM(group, isSelected) {
+    // For scheme1, group is just a node with isFilled = true
     const el = document.createElement('div');
     el.className = 'group-node' + (isSelected ? ' selected' : '');
     el.style.top = group.top;
@@ -19,12 +18,15 @@ export function createGroupDOM(group, isSelected) {
 
     const circle = document.createElement('div');
     circle.className = 'circle';
+    circle.style.background = group.color;
     circle.style.borderColor = group.color;
+    circle.style.color = group.color;
     el.appendChild(circle);
 
     const label = document.createElement('div');
     label.className = 'group-label';
     label.textContent = group.name;
+    label.style.color = group.color;
     el.appendChild(label);
 
     nodesContainer.appendChild(el);
@@ -34,5 +36,5 @@ export function clearGroups() {
     nodesContainer.querySelectorAll('.group-node').forEach(el => el.remove());
 }
 export function randomColor() {
-    return groupColors[Math.floor(Math.random()*groupColors.length)];
+    return getRandomBrightColor();
 }

@@ -2,7 +2,7 @@ body {
     font-family: 'Montserrat', sans-serif;
     margin: 0;
     padding: 0;
-    background: #ede9f7;
+    background: #fff;
     min-height: 100vh;
     color: #232323;
     overflow: hidden;
@@ -14,63 +14,6 @@ body {
     position: relative;
 }
 
-#hero {
-    background: radial-gradient(ellipse at top, #c9b9fa 0%, #ede9f7 100%);
-    padding: 36px 0 60px 0;
-    width: 100vw;
-    box-shadow: 0 30px 60px 0 #bfa7e333;
-    border-radius: 0 0 38px 38px;
-    position: relative;
-    z-index: 10;
-    overflow: visible;
-}
-.hero-text {
-    max-width: 560px;
-    margin: 0 auto;
-    text-align: center;
-    color: #231c42;
-}
-.brand {
-    font-weight: bold;
-    font-size: 1.3rem;
-    color: #6d65c4;
-    letter-spacing: 0.06em;
-    margin-bottom: 10px;
-    display: block;
-}
-#hero h1 {
-    font-size: 2.3rem;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    letter-spacing: -1.2px;
-}
-#hero p {
-    font-size: 1.1rem;
-    margin-bottom: 22px;
-    color: #3e375a;
-}
-.cta-btn {
-    background: linear-gradient(90deg, #a181f8 0%, #6f62e5 100%);
-    color: #fff;
-    border: none;
-    font-size: 1.13rem;
-    padding: 11px 36px;
-    border-radius: 22px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 14px #a181f833;
-    transition: background 0.18s;
-}
-.cta-btn:hover {
-    background: linear-gradient(90deg, #6f62e5 0%, #a181f8 100%);
-}
-
-main {
-    width: 100vw;
-    height: calc(100vh - 260px);
-    position: relative;
-}
-
 #nodes-container {
     position: absolute;
     inset: 0;
@@ -78,76 +21,150 @@ main {
     height: 100vh;
     overflow: hidden;
     z-index: 1;
-    background: transparent;
+}
+
+.node, .group-node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    z-index: 2;
+    user-select: none;
+}
+
+.node .circle, .group-node .circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: none;
+}
+
+.node.selected .circle,
+.group-node.selected .circle {
+    box-shadow: 0 0 16px 3px #19ff19cc;
+}
+
+.node .circle img, .group-node .circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.node .node-label, .group-node .group-label {
+    margin-top: 10px;
+    text-align: center;
+    width: 110px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #444;
+    pointer-events: none;
+}
+
+.node.main .circle {
+    border-width: 3.8px;
+    background: #e4e4e4;
+    width: 110px;
+    height: 110px;
+}
+.node.main .node-label {
+    color: #232323;
+    font-weight: bold;
+    font-size: 1.08rem;
+}
+
+.group-node .circle {
+    background: currentColor;
+    border-width: 3.8px;
+}
+.group-node .group-label {
+    font-weight: bold;
+    color: currentColor !important;
+}
+
+.node.unfilled .circle {
+    background: #fff;
+    border-style: solid;
+    border-width: 3px;
+}
+.node.unfilled .node-label {
+    color: #444;
+}
+
+.node.dragging, .group-node.dragging {
+    opacity: 0.7;
+    z-index: 999 !important;
 }
 
 #floating-buttons {
     position: fixed;
-    bottom: 26px;
+    bottom: 45px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 20px;
+    gap: 40px;
     z-index: 20;
 }
+
 .fab {
-    border: none;
+    border: 3px solid #9146eb;
     border-radius: 50%;
-    width: 62px;
-    height: 62px;
+    width: 66px;
+    height: 66px;
     font-size: 2.3rem;
-    background: #7d6cf6;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    background: #fff938;
+    color: #9146eb;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.18s, box-shadow 0.18s;
     cursor: pointer;
     outline: none;
+    box-shadow: 0 2px 8px #e5d5ff44;
 }
-.fab.add-group {
-    background: #e76fd1;
-    font-size: 1.8rem;
-}
-.fab.screenshot {
-    background: #ffc107;
-    color: #333;
-    font-size: 1.7rem;
-}
-.fab:active, .fab:focus {
-    background: #5649ba;
-    box-shadow: 0 4px 16px #7d6cf644;
-}
-.fab.add-group:active, .fab.add-group:focus {
-    background: #b44ca2;
-    box-shadow: 0 4px 16px #e76fd144;
-}
-.fab.screenshot:active, .fab.screenshot:focus {
-    background: #d7a600;
-    box-shadow: 0 4px 16px #ffc10744;
+.fab.add-group { color: #9146eb }
+.fab:active, .fab:focus { background: #f9ea8d; }
+
+.fab-label {
+    margin-top: 8px;
+    font-size: 0.98rem;
+    color: #555;
+    text-align: center;
+    font-weight: 500;
+    width: 120px;
+    user-select: none;
 }
 
 .form-modal {
     position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    right: 40px;
+    top: 120px;
     background: #fff;
     color: #333;
-    padding: 24px 24px 14px 24px;
-    width: 350px;
-    border-radius: 16px;
-    box-shadow: 0 4px 28px 2px #bbb;
+    padding: 22px 28px 22px 28px;
+    width: 320px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px 2px #bbb;
     z-index: 50;
     transition: all 0.2s;
     display: block;
+    border: 2px solid #d1ccff;
 }
 .form-modal.hidden { display: none; }
 .form-modal h2 {
-    margin: 0 0 14px 0;
+    margin: 0 0 17px 0;
     text-align: center;
-    color: #333;
+    color: #793be6;
+    font-size: 1.23rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
 .form-modal label {
     display: block;
@@ -155,7 +172,7 @@ main {
     font-size: 1rem;
 }
 .form-modal input[type="text"], .form-modal input[type="file"] {
-    width: 95%;
+    width: 96%;
     margin-top: 4px;
     margin-bottom: 8px;
     padding: 8px;
@@ -169,93 +186,20 @@ main {
     margin-top: 12px;
     width: 100%;
     padding: 10px;
-    background: #7d6cf6;
+    background: #9146eb;
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
-#group-form .submit-btn { background: #e76fd1; }
-.submit-btn:hover { background: #5649ba; }
-#group-form .submit-btn:hover { background: #b44ca2; }
-
-.node, .group-node {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    z-index: 2;
-    transition: box-shadow 0.2s;
-    user-select: none;
-}
-
-.node .circle, .group-node .circle {
-    width: 92px;
-    height: 92px;
-    border-radius: 50%;
-    background: #fefcff;
-    overflow: hidden;
-    border: 4px solid #b48ffa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 6px 24px #c0b6e133;
-}
-.node .circle img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.node.selected .circle, .group-node.selected .circle {
-    border-color: #19ff19;
-    box-shadow: 0 0 22px 4px #19ff19cc;
-}
-
-.node .node-label, .group-node .group-label {
-    margin-top: 10px;
-    text-align: center;
-    width: 120px;
-    font-size: 1.15rem;
-    font-weight: bold;
-    color: #231c42;
-    text-shadow: 0 1px 4px #fff;
-    pointer-events: none;
-    background: rgba(255,255,255,0.77);
-    border-radius: 7px;
-    padding: 2px 4px;
-    font-family: 'Montserrat', sans-serif;
-}
-
-.node.main .circle {
-    border: 6px solid #a181f8;
-    box-shadow: 0 0 32px 8px #a181f8bb;
-    width: 126px;
-    height: 126px;
-    background: #fff0fa;
-    margin-bottom: 0;
-}
-.node.main .node-label {
-    color: #6d65c4;
-    font-size: 1.3rem;
-    font-weight: bolder;
-    text-shadow: 0 2px 8px #fff;
-    background: rgba(255,255,255,0.88);
-}
-
-.node.dragging, .group-node.dragging {
-    opacity: 0.7;
-    z-index: 999 !important;
-}
+.submit-btn:hover { background: #6d24c7; }
 
 @media (max-width: 600px) {
-    #main-title { font-size: 1.2rem; top: 10px; }
-    .form-modal { width: 98vw; left: 50%; }
-    #floating-buttons { bottom: 12px; gap: 12px; }
-    .fab { width: 52px; height: 52px; font-size: 2rem; }
-    .fab.add-group { font-size: 1.5rem; }
+    .form-modal { width: 94vw; right: 2vw; top: 36vw; }
+    #floating-buttons { bottom: 12px; gap: 10px; }
+    .fab-label { font-size: 0.80rem; width: 70px; }
+    .fab { width: 50px; height: 50px; font-size: 1.3rem; }
 }

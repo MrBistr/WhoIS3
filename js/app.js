@@ -1,145 +1,105 @@
-import { getNodes, setNodes, createNodeDOM, clearNodes } from './nodes.js';
+import { getNodes, setNodes, createNodeDOM, clearNodes, getRandomBrightColor } from './nodes.js';
 import { getConnections, setConnections, drawConnections } from './connections.js';
 import { getGroups, setGroups, createGroupDOM, clearGroups, randomColor } from './groups.js';
 
-const teamDemo = [
-  {
-    id: "main-user",
-    name: "YOU",
-    jobTitle: "Team Leader",
-    image: "https://randomuser.me/api/portraits/men/99.jpg",
-    floating: false
-  },
-  {
-    id: "arsen",
-    name: "Arsen",
-    jobTitle: "Chief Communications Officer",
-    image: "https://randomuser.me/api/portraits/men/23.jpg",
-    floating: true
-  },
-  {
-    id: "bohdan",
-    name: "Bohdan",
-    jobTitle: "Project Manager",
-    image: "https://randomuser.me/api/portraits/men/31.jpg",
-    floating: true
-  },
-  {
-    id: "cynthia",
-    name: "Cynthia",
-    jobTitle: "Partner & US Business Development Lead",
-    image: "https://randomuser.me/api/portraits/women/57.jpg",
-    floating: true
-  },
-  {
-    id: "anna",
-    name: "Anna",
-    jobTitle: "Project Manager",
-    image: "https://randomuser.me/api/portraits/women/12.jpg",
-    floating: true
-  },
-  {
-    id: "julia",
-    name: "Julia",
-    jobTitle: "UX/UI Designer & Illustrator",
-    image: "https://randomuser.me/api/portraits/women/60.jpg",
-    floating: true
-  },
-  {
-    id: "nick",
-    name: "Nick",
-    jobTitle: "UX/UI Designer",
-    image: "https://randomuser.me/api/portraits/men/85.jpg",
-    floating: true
-  },
-  {
-    id: "john",
-    name: "John",
-    jobTitle: "Front-end Developer",
-    image: "https://randomuser.me/api/portraits/men/66.jpg",
-    floating: true
-  },
-  {
-    id: "anastasia",
-    name: "Anastasia",
-    jobTitle: "Front-end Developer",
-    image: "https://randomuser.me/api/portraits/women/90.jpg",
-    floating: true
-  },
-  {
-    id: "max",
-    name: "Max",
-    jobTitle: "Front-end Developer",
-    image: "https://randomuser.me/api/portraits/men/44.jpg",
-    floating: true
-  }
-];
-
-const teamGroups = [
-  { id: "g1", name: "Design", color: "#e76fd1" },
-  { id: "g2", name: "Development", color: "#7d6cf6" },
-  { id: "g3", name: "Management", color: "#6d65c4" }
-];
-
+// --- Demo data with "scheme1" logic ---
 function setupDemoIfEmpty() {
     if (!localStorage.getItem('nodes')) {
         const width = window.innerWidth, height = window.innerHeight;
-        const nodes = teamDemo.map((person, idx) => {
-            let angle = (idx-1) * (2 * Math.PI) / (teamDemo.length-1);
-            if (idx === 0) {
-                return {
-                    ...person,
-                    top: `${height/2 - 63}px`,
-                    left: `${width/2 - 63}px`
-                };
-            } else {
-                let rad = 230 + (idx%3)*40;
-                let x = width/2 + Math.cos(angle) * rad;
-                let y = height/2 + Math.sin(angle) * rad;
-                return {
-                    ...person,
-                    top: `${y}px`,
-                    left: `${x}px`
-                };
-            }
-        });
-        const groups = teamGroups.map((g, i) => {
-            let angle = i * (2 * Math.PI) / teamGroups.length + 0.6;
-            let rad = 410;
-            let gx = width/2 + Math.cos(angle)*rad;
-            let gy = height/2 + Math.sin(angle)*rad;
-            return { ...g, top: `${gy}px`, left: `${gx}px` };
-        });
-        const connections = [
-            { type: "group2user", group: "g1", user: "main-user", color: "#b48ffa" },
-            { type: "group2user", group: "g2", user: "main-user", color: "#b48ffa" },
-            { type: "group2user", group: "g3", user: "main-user", color: "#b48ffa" },
-            { type: "group", group: "g1", node: "julia", color: "#e76fd1" },
-            { type: "group", group: "g1", node: "nick", color: "#e76fd1" },
-            { type: "group", group: "g2", node: "john", color: "#7d6cf6" },
-            { type: "group", group: "g2", node: "anastasia", color: "#7d6cf6" },
-            { type: "group", group: "g2", node: "max", color: "#7d6cf6" },
-            { type: "group", group: "g3", node: "arsen", color: "#6d65c4" },
-            { type: "group", group: "g3", node: "bohdan", color: "#6d65c4" },
-            { type: "group", group: "g3", node: "cynthia", color: "#6d65c4" },
-            { type: "group", group: "g3", node: "anna", color: "#6d65c4" },
-            { type: "node", from: "main-user", to: "julia" },
-            { type: "node", from: "main-user", to: "john" },
-            { type: "node", from: "main-user", to: "arsen" },
-            { type: "node", from: "john", to: "anastasia" },
-            { type: "node", from: "julia", to: "nick" },
-            { type: "node", from: "bohdan", to: "anna" }
-        ];
-        const connected = new Set();
-        connections.forEach(c => {
-            if (c.type === "group") connected.add(c.node);
-            if (c.type === "group2user") connected.add(c.group);
-            if (c.type === "node") { connected.add(c.from); connected.add(c.to); }
-        });
-        nodes.forEach(n => { if (connected.has(n.id)) n.floating = false; });
-        setNodes(nodes);
-        setGroups(groups);
-        setConnections(connections);
+        // Center user node
+        const userColor = getRandomBrightColor();
+        const nodes = [{
+            id: "main-user",
+            name: "User name",
+            jobTitle: "Job title",
+            image: "",
+            color: userColor,
+            isFilled: false,
+            top: `${height/2 - 55}px`,
+            left: `${width/2 - 55}px`,
+            floating: false
+        }];
+        // Group to left
+        const g1Color = getRandomBrightColor();
+        const group1 = {
+            id: "g1",
+            name: "GROUP",
+            color: g1Color,
+            top: `${height/2 - 50}px`,
+            left: `${width/2 - 230}px`
+        };
+        // Nodes for group1
+        const group1Nodes = [];
+        for (let i = 0; i < 3; ++i) {
+            let angle = Math.PI/2 + (i-1)*Math.PI/5;
+            let rad = 110;
+            group1Nodes.push({
+                id: "n1g"+i,
+                name: "NODE name",
+                jobTitle: "Job title",
+                image: "",
+                color: g1Color,
+                isFilled: false,
+                top: `${parseFloat(group1.top) + Math.sin(angle)*rad}px`,
+                left: `${parseFloat(group1.left) + Math.cos(angle)*rad}px`,
+                floating: false
+            });
+        }
+        // Direct node to user (top)
+        const orangeColor = getRandomBrightColor();
+        const directNode = {
+            id: "direct1",
+            name: "NODE name",
+            jobTitle: "Job title",
+            image: "",
+            color: orangeColor,
+            isFilled: false,
+            top: `${height/2 - 160}px`,
+            left: `${width/2 + 60}px`,
+            floating: false
+        };
+        // Group to right
+        const g2Color = getRandomBrightColor();
+        const group2 = {
+            id: "g2",
+            name: "GROUP",
+            color: g2Color,
+            top: `${height/2 - 40}px`,
+            left: `${width/2 + 210}px`
+        };
+        // Nodes for group2
+        const group2Nodes = [];
+        for (let i = 0; i < 4; ++i) {
+            let angle = Math.PI/2 + (i-1.5)*Math.PI/5;
+            let rad = 110;
+            group2Nodes.push({
+                id: "n2g"+i,
+                name: "NODE name",
+                jobTitle: "Job title",
+                image: "",
+                color: g2Color,
+                isFilled: false,
+                top: `${parseFloat(group2.top) + Math.sin(angle)*rad}px`,
+                left: `${parseFloat(group2.left) + Math.cos(angle)*rad}px`,
+                floating: false
+            });
+        }
+        // Compose demo
+        setNodes([
+            ...nodes,
+            ...group1Nodes,
+            directNode,
+            ...group2Nodes
+        ]);
+        setGroups([group1, group2]);
+        // Connections
+        setConnections([
+            { type: "group2user", group: "g1", user: "main-user", color: g1Color },
+            { type: "group2user", group: "g2", user: "main-user", color: g2Color },
+            ...group1Nodes.map(n => ({ type: "group", group: "g1", node: n.id, color: g1Color })),
+            ...group2Nodes.map(n => ({ type: "group", group: "g2", node: n.id, color: g2Color })),
+            { type: "node", from: "main-user", to: "direct1" }
+        ]);
     }
 }
 
@@ -163,11 +123,7 @@ function render() {
     enableDragAndDrop();
 }
 
-document.getElementById('get-started-btn').onclick = function() {
-    document.getElementById('hero').style.display = 'none';
-    document.getElementById('floating-buttons').classList.remove('hidden');
-};
-
+// --- FAB buttons ---
 const addNodeFab = document.getElementById('add-node-fab');
 const inputForm = document.getElementById('input-form');
 addNodeFab.addEventListener('click', function(e) {
@@ -180,6 +136,8 @@ groupBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     showGroupForm();
 });
+
+// --- Hide forms logic ---
 function hideFormsIfClickedOutside(e) {
     if (!inputForm.classList.contains('hidden') && !inputForm.contains(e.target) && !addNodeFab.contains(e.target)) {
         inputForm.classList.add('hidden');
@@ -286,7 +244,8 @@ function addNode(name, jobTitle, image) {
     const id = 'n' + Date.now() + Math.floor(Math.random()*100000);
     let top = `${Math.random() * (window.innerHeight-200) + 100}px`;
     let left = `${Math.random() * (window.innerWidth-200) + 100}px`;
-    const node = { id, name, jobTitle, image, top, left, floating: true };
+    const color = getRandomBrightColor();
+    const node = { id, name, jobTitle, image, top, left, floating: true, color, isFilled: false };
     nodes.push(node);
     setNodes(nodes);
     render();
@@ -295,18 +254,19 @@ function addGroup(name) {
     const id = 'g' + Date.now() + Math.floor(Math.random()*100000);
     const top = `${Math.random() * (window.innerHeight-200) + 100}px`;
     const left = `${Math.random() * (window.innerWidth-200) + 100}px`;
-    const color = randomColor();
+    const color = getRandomBrightColor();
     const group = { id, name, color, top, left };
     groups.push(group);
     setGroups(groups);
     if (nodes.length > 0) {
         const userId = nodes[0].id;
-        connections.push({ type: "group2user", group: id, user: userId, color: "#b48ffa" });
+        connections.push({ type: "group2user", group: id, user: userId, color });
         setConnections(connections);
     }
     render();
 }
 
+// --- Node/Group selection, connect on drag ---
 let lastClickTime = 0;
 let lastClickedElement = null;
 document.getElementById('nodes-container').addEventListener('click', function(e) {
@@ -354,64 +314,8 @@ document.getElementById('nodes-container').addEventListener('click', function(e)
         return;
     }
 }, true);
-document.getElementById('nodes-container').addEventListener('click', function(e) {
-    const nodeEl = e.target.closest('.node');
-    const groupEl = e.target.closest('.group-node');
-    if (selectedNodeId && groupEl) {
-        const groupId = groupEl.dataset.groupId;
-        if (!connections.find(c => c.type === "group" && c.group === groupId && c.node === selectedNodeId)) {
-            const group = groups.find(g => g.id === groupId);
-            connections.push({ type: "group", group: groupId, node: selectedNodeId, color: group.color });
-            setConnections(connections);
-            nodes = nodes.map(n => {
-                if (n.id === selectedNodeId) {
-                    n.floating = false;
-                    let t1 = parseFloat(n.top), l1 = parseFloat(n.left);
-                    let t2 = parseFloat(group.top), l2 = parseFloat(group.left);
-                    const newTop = t1 + 0.35 * (t2 - t1);
-                    const newLeft = l1 + 0.35 * (l2 - l1);
-                    n.top = `${newTop}px`;
-                    n.left = `${newLeft}px`;
-                }
-                return n;
-            });
-            setNodes(nodes);
-            selectedNodeId = null;
-            render();
-        }
-        return;
-    }
-    if (selectedNodeId && nodeEl) {
-        const nodeId = nodeEl.dataset.nodeId;
-        if (selectedNodeId !== nodeId) {
-            if (!connections.find(c =>
-                c.type === "node" && ((c.from === selectedNodeId && c.to === nodeId) || (c.from === nodeId && c.to === selectedNodeId)))) {
-                connections.push({ type: "node", from: selectedNodeId, to: nodeId });
-                setConnections(connections);
-                nodes = nodes.map(n => {
-                    if (n.id === nodeId || n.id === selectedNodeId) {
-                        n.floating = false;
-                        const other = nodes.find(nn => nn.id === (n.id === nodeId ? selectedNodeId : nodeId));
-                        if (other) {
-                            let t1 = parseFloat(n.top), l1 = parseFloat(n.left);
-                            let t2 = parseFloat(other.top), l2 = parseFloat(other.left);
-                            const newTop = t1 + 0.35 * (t2 - t1);
-                            const newLeft = l1 + 0.35 * (l2 - l1);
-                            n.top = `${newTop}px`;
-                            n.left = `${newLeft}px`;
-                        }
-                    }
-                    return n;
-                });
-                setNodes(nodes);
-                selectedNodeId = null;
-                render();
-            }
-        }
-        return;
-    }
-}, true);
 
+// Connect on drag
 function enableDragAndDrop() {
     document.querySelectorAll('.node:not(.main), .group-node').forEach(nodeEl => {
         nodeEl.onmousedown = startDrag;
@@ -470,7 +374,8 @@ function startDrag(e) {
         if (!dragData.isGroup && targetNode && targetNode.dataset.nodeId !== dragData.id) {
             if (!connections.find(c =>
                 c.type === "node" && ((c.from === dragData.id && c.to === targetNode.dataset.nodeId) || (c.from === targetNode.dataset.nodeId && c.to === dragData.id)))) {
-                connections.push({ type: "node", from: dragData.id, to: targetNode.dataset.nodeId });
+                const srcNode = nodes.find(n => n.id === dragData.id);
+                connections.push({ type: "node", from: dragData.id, to: targetNode.dataset.nodeId, color: srcNode.color });
                 setConnections(connections);
                 nodes = nodes.map(n => {
                     if (n.id === dragData.id || n.id === targetNode.dataset.nodeId) {
@@ -534,6 +439,7 @@ function startDrag(e) {
     document.addEventListener('touchend', onUp);
 }
 
+// Floating animation for unconnected nodes
 function floatNodes() {
     if (nodes.length === 0) return;
     nodes = getNodes();
@@ -547,8 +453,8 @@ function floatNodes() {
             if(dom && !dom.classList.contains('dragging')) { dom.style.top = n.top; dom.style.left = n.left; }
         }
         if (n.id === "main-user") {
-            n.top = `${window.innerHeight/2 - 63}px`;
-            n.left = `${window.innerWidth/2 - 63}px`;
+            n.top = `${window.innerHeight/2 - 55}px`;
+            n.left = `${window.innerWidth/2 - 55}px`;
             const dom = document.querySelector(`.node[data-node-id="${n.id}"]`);
             if(dom) { dom.style.top = n.top; dom.style.left = n.left; }
         }
@@ -557,20 +463,6 @@ function floatNodes() {
     setTimeout(floatNodes, 40);
 }
 floatNodes();
-
-document.getElementById('screenshot-btn').onclick = function() {
-    document.querySelectorAll('.form-modal').forEach(f => f.classList.add('hidden'));
-    document.getElementById('floating-buttons').style.display = 'none';
-    setTimeout(() => {
-        html2canvas(document.getElementById('app')).then(canvas => {
-            let link = document.createElement('a');
-            link.download = 'social-map.png';
-            link.href = canvas.toDataURL();
-            link.click();
-            document.getElementById('floating-buttons').style.display = '';
-        });
-    }, 300);
-};
 
 setupDemoIfEmpty();
 window.onload = render;
