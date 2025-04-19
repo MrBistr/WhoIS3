@@ -17,6 +17,7 @@ export function createNodeDOM(node, isSelected, isMain) {
 
     const circle = document.createElement('div');
     circle.className = 'circle';
+    circle.style.borderColor = node.color || "#a690e1";
     if (node.image) {
         const img = document.createElement('img');
         img.src = node.image;

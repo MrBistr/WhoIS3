@@ -28,8 +28,9 @@ export function drawConnections(nodes, groups) {
         if (conn.type === "node") {
             const from = nodeMap[conn.from];
             const to = nodeMap[conn.to];
+            const srcNode = nodes.find(n => n.id === conn.from);
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color, size: thickness }));
+                lines.push(new LeaderLine(from, to, { color: srcNode?.color || color, size: thickness }));
             }
         }
         if (conn.type === "group") {
