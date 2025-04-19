@@ -25,12 +25,13 @@ export function drawConnections(nodes, groups) {
     connections.forEach(conn => {
         let color = "#a690e1";
         let thickness = 4;
+        let dash = { dot: true }; // Dotted line for all connections
         if (conn.type === "node") {
             const from = nodeMap[conn.from];
             const to = nodeMap[conn.to];
             const srcNode = nodes.find(n => n.id === conn.from);
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color: srcNode?.color || color, size: thickness }));
+                lines.push(new LeaderLine(from, to, { color: srcNode?.color || color, size: thickness, dash }));
             }
         }
         if (conn.type === "group") {
@@ -38,7 +39,7 @@ export function drawConnections(nodes, groups) {
             const from = groupMap[conn.group];
             const to = nodeMap[conn.node];
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color, size: thickness }));
+                lines.push(new LeaderLine(from, to, { color, size: thickness, dash }));
             }
         }
         if (conn.type === "group2user") {
@@ -46,7 +47,7 @@ export function drawConnections(nodes, groups) {
             const from = nodeMap[conn.user];
             const to = groupMap[conn.group];
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color, size: thickness }));
+                lines.push(new LeaderLine(from, to, { color, size: thickness, dash }));
             }
         }
     });
