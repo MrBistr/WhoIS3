@@ -22,26 +22,31 @@ function render() {
     enableDragAndDrop();
 }
 
-// Hero "Start Your Social Map"
+// Demo background fade out on start
 document.getElementById('get-started-btn').onclick = function() {
-    document.getElementById('hero').style.display = 'none';
-    document.getElementById('floating-buttons').classList.remove('hidden');
-    nodes = getNodes();
-    if (!nodes || nodes.length === 0) {
-        const width = window.innerWidth, height = window.innerHeight;
-        const node = {
-            id: "main-user",
-            name: "You",
-            jobTitle: "Your Title",
-            color: colorOptions[0],
-            image: "",
-            top: `${height/2 - 63}px`,
-            left: `${width/2 - 63}px`,
-            floating: false
-        };
-        setNodes([node]);
-        render();
-    }
+    document.getElementById('hero').style.display = 'block';
+    const demoBg = document.getElementById('demo-bg');
+    demoBg.classList.add('hide');
+    setTimeout(() => {
+        document.getElementById('hero').style.display = 'none';
+        document.getElementById('floating-buttons').classList.remove('hidden');
+        nodes = getNodes();
+        if (!nodes || nodes.length === 0) {
+            const width = window.innerWidth, height = window.innerHeight;
+            const node = {
+                id: "main-user",
+                name: "You",
+                jobTitle: "Your Title",
+                color: colorOptions[0],
+                image: "",
+                top: `${height/2 - 63}px`,
+                left: `${width/2 - 63}px`,
+                floating: false
+            };
+            setNodes([node]);
+            render();
+        }
+    }, 700);
 };
 
 const addNodeFab = document.getElementById('add-node-fab');
@@ -74,8 +79,8 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function buildColorPicker(currentColor, onPick) {
-    const picker = document.getElementById('color-picker');
+function buildColorPicker(containerId, currentColor, onPick) {
+    const picker = document.getElementById(containerId);
     picker.innerHTML = '';
     colorOptions.forEach(color => {
         const swatch = document.createElement('div');
@@ -91,45 +96,119 @@ function buildColorPicker(currentColor, onPick) {
     });
 }
 
+function buildConnectionDropdown(selectedId) {
+    const select = document.getElementById('connection-select');
+    select.innerHTML = '<option value="">None</option>';
+    nodes.forEach(n => {
+        if (n.id !== editingNodeId) {
+            const opt = document.createElement('option');
+            opt.value = n.id;
+            opt.textContent = n.name + (n.jobTitle ? ' (' + n.jobTitle + ')' : '');
+            if (selectedId === n.id) opt.selected = true;
+            select.appendChild(opt);
+        }
+    });
+    groups.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = '[Group] ' + g.name;
+        if (selectedId === g.id) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
 function showNodeForm(editNode = null) {
     inputForm.classList.remove('hidden');
     groupForm.classList.add('hidden');
-    editingNodeId = null;
+    editingNodeId = editNode ? editNode.id : null;
     document.getElementById('form-title').textContent = editNode ? 'Edit Node' : 'Add a Node';
     document.getElementById('add-node-btn').textContent = editNode ? 'Update Node' : 'Add Node';
 
     let nodeColor = editNode ? editNode.color : colorOptions[0];
-    buildColorPicker(nodeColor, (picked) => { nodeColor = picked; });
+    buildColorPicker('color-picker', nodeColor, (picked) => { nodeColor = picked; });
 
+    let currentConnId = "";
     if (editNode) {
-        editingNodeId = editNode.id;
         document.getElementById('name-input').value = editNode.name;
         document.getElementById('job-title-input').value = editNode.jobTitle;
         document.getElementById('image-upload').value = "";
+        // Find current connection for this node (if any)
+        const conn = connections.find(c => 
+            (c.type === 'node' && (c.from === editNode.id || c.to === editNode.id)) ||
+            (c.type === 'group' && c.node === editNode.id)
+        );
+        currentConnId =
+            conn ?
+            (conn.type === 'node'
+                ? (conn.from === editNode.id ? conn.to : conn.from)
+                : conn.group)
+            : "";
     } else {
         document.getElementById('name-input').value = "";
         document.getElementById('job-title-input').value = "";
         document.getElementById('image-upload').value = "";
     }
+    buildConnectionDropdown(currentConnId);
+
     document.getElementById('name-input').focus();
 
     document.getElementById('add-node-btn').onclick = function() {
         const name = document.getElementById('name-input').value.trim();
         const jobTitle = document.getElementById('job-title-input').value.trim();
         const fileInput = document.getElementById('image-upload');
+        const connTarget = document.getElementById('connection-select').value;
         if (!name || !jobTitle) {
             alert('Please fill in all fields.');
             return;
         }
         const saveNode = (image) => {
+            let thisId = editingNodeId;
             if (editingNodeId) {
                 nodes = nodes.map(n =>
                     n.id === editingNodeId ? { ...n, name, jobTitle, image: image || n.image, color: nodeColor } : n
                 );
                 setNodes(nodes);
             } else {
-                addNode(name, jobTitle, image, nodeColor);
+                thisId = 'n' + Date.now() + Math.floor(Math.random()*100000);
+                let top = `${Math.random() * (window.innerHeight-220) + 120}px`;
+                let left = `${Math.random() * (window.innerWidth-220) + 120}px`;
+                const node = { id: thisId, name, jobTitle, image, color: nodeColor, top, left, floating: true };
+                nodes.push(node);
+                setNodes(nodes);
             }
+
+            // Remove old connections for this node (if editing)
+            connections = getConnections().filter(c =>
+                !((c.type === 'node' && (c.from === thisId || c.to === thisId)) ||
+                (c.type === 'group' && c.node === thisId))
+            );
+            // Add new connection if selected
+            if (connTarget) {
+                if (groups.find(g => g.id === connTarget)) {
+                    connections.push({ type: "group", group: connTarget, node: thisId, color: groups.find(g => g.id === connTarget).color });
+                } else {
+                    connections.push({ type: "node", from: thisId, to: connTarget });
+                }
+                // Move node close to target
+                let n = nodes.find(n => n.id === thisId);
+                let t, l;
+                if (groups.find(g => g.id === connTarget)) {
+                    let g = groups.find(g => g.id === connTarget);
+                    t = parseFloat(g.top) + 70;
+                    l = parseFloat(g.left) + 70;
+                } else {
+                    let n2 = nodes.find(nn => nn.id === connTarget);
+                    t = parseFloat(n2.top) + 90;
+                    l = parseFloat(n2.left) + 90;
+                }
+                if (n) {
+                    n.top = `${t}px`;
+                    n.left = `${l}px`;
+                    setNodes(nodes);
+                }
+            }
+            setConnections(connections);
+
             inputForm.classList.add('hidden');
             editingNodeId = null;
             render();
@@ -150,41 +229,51 @@ function showNodeForm(editNode = null) {
 function showGroupForm(editGroup = null) {
     groupForm.classList.remove('hidden');
     inputForm.classList.add('hidden');
-    editingGroupId = null;
+    editingGroupId = editGroup ? editGroup.id : null;
     document.getElementById('group-form-title').textContent = editGroup ? 'Edit Group' : 'Add a Group';
     document.getElementById('create-group-btn').textContent = editGroup ? 'Update Group' : 'Create Group';
+
+    let groupColor = editGroup ? editGroup.color : colorOptions[0];
+    buildColorPicker('group-color-picker', groupColor, (picked) => { groupColor = picked; });
+
     if (editGroup) {
-        editingGroupId = editGroup.id;
         document.getElementById('group-name-input').value = editGroup.name;
     } else {
         document.getElementById('group-name-input').value = "";
     }
     document.getElementById('group-name-input').focus();
-}
 
-function addNode(name, jobTitle, image, color) {
-    const id = 'n' + Date.now() + Math.floor(Math.random()*100000);
-    let top = `${Math.random() * (window.innerHeight-220) + 120}px`;
-    let left = `${Math.random() * (window.innerWidth-220) + 120}px`;
-    const node = { id, name, jobTitle, image, color, top, left, floating: true };
-    nodes.push(node);
-    setNodes(nodes);
-    render();
-}
-function addGroup(name) {
-    const id = 'g' + Date.now() + Math.floor(Math.random()*100000);
-    const top = `${Math.random() * (window.innerHeight-200) + 100}px`;
-    const left = `${Math.random() * (window.innerWidth-200) + 100}px`;
-    const color = randomColor();
-    const group = { id, name, color, top, left };
-    groups.push(group);
-    setGroups(groups);
-    if (nodes.length > 0) {
-        const userId = nodes[0].id;
-        connections.push({ type: "group2user", group: id, user: userId, color });
-        setConnections(connections);
-    }
-    render();
+    document.getElementById('create-group-btn').onclick = function() {
+        const groupName = document.getElementById('group-name-input').value.trim();
+        if (!groupName) {
+            alert('Please enter a group name.');
+            return;
+        }
+        if (editingGroupId) {
+            groups = groups.map(g =>
+                g.id === editingGroupId ? { ...g, name: groupName, color: groupColor } : g
+            );
+            setGroups(groups);
+            groupForm.classList.add('hidden');
+            editingGroupId = null;
+            render();
+        } else {
+            const id = 'g' + Date.now() + Math.floor(Math.random()*100000);
+            const top = `${Math.random() * (window.innerHeight-200) + 100}px`;
+            const left = `${Math.random() * (window.innerWidth-200) + 100}px`;
+            const group = { id, name: groupName, color: groupColor, top, left };
+            groups.push(group);
+            setGroups(groups);
+            // Optionally connect to main if exists:
+            if (nodes.length > 0) {
+                const userId = nodes[0].id;
+                connections.push({ type: "group2user", group: id, user: userId, color: groupColor });
+                setConnections(connections);
+            }
+            groupForm.classList.add('hidden');
+            render();
+        }
+    };
 }
 
 document.getElementById('nodes-container').addEventListener('click', function(e) {

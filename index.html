@@ -17,6 +17,9 @@
                 <p id="hero-desc">Experience the easy and visual way of connecting with your colleagues</p>
                 <button id="get-started-btn" class="cta-btn">Start Your Social Map</button>
             </div>
+            <div id="demo-bg">
+                <img src="demo-network.png" alt="Demo Network" />
+            </div>
         </header>
         <main>
             <div id="nodes-container"></div>
@@ -39,6 +42,11 @@
             </label>
             <div id="color-picker-label">Color:</div>
             <div id="color-picker"></div>
+            <label>Connection:
+                <select id="connection-select">
+                    <option value="">None</option>
+                </select>
+            </label>
             <button id="add-node-btn" class="submit-btn">Add Node</button>
         </div>
         <!-- Add/Edit Group Form -->
@@ -47,6 +55,8 @@
             <label>Group Name:
                 <input type="text" id="group-name-input" placeholder="Enter group name" autocomplete="off" />
             </label>
+            <div id="group-color-picker-label">Color:</div>
+            <div id="group-color-picker"></div>
             <button id="create-group-btn" class="submit-btn">Create Group</button>
         </div>
     </div>
