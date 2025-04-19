@@ -117,6 +117,14 @@ function buildConnectionDropdown(selectedId) {
     });
 }
 
+function getTargetColor(targetId) {
+    let target = nodes.find(n => n.id === targetId);
+    if (target) return target.color;
+    let group = groups.find(g => g.id === targetId);
+    if (group) return group.color;
+    return colorOptions[0];
+}
+
 function showNodeForm(editNode = null) {
     inputForm.classList.remove('hidden');
     groupForm.classList.add('hidden');
@@ -149,6 +157,15 @@ function showNodeForm(editNode = null) {
         document.getElementById('image-upload').value = "";
     }
     buildConnectionDropdown(currentConnId);
+
+    // If editing and connection exists, set color to target automatically
+    document.getElementById('connection-select').onchange = function() {
+        const val = this.value;
+        if (val) {
+            nodeColor = getTargetColor(val);
+            buildColorPicker('color-picker', nodeColor, (picked) => { nodeColor = picked; });
+        }
+    };
 
     document.getElementById('name-input').focus();
 
@@ -189,23 +206,8 @@ function showNodeForm(editNode = null) {
                 } else {
                     connections.push({ type: "node", from: thisId, to: connTarget });
                 }
-                // Move node close to target
-                let n = nodes.find(n => n.id === thisId);
-                let t, l;
-                if (groups.find(g => g.id === connTarget)) {
-                    let g = groups.find(g => g.id === connTarget);
-                    t = parseFloat(g.top) + 70;
-                    l = parseFloat(g.left) + 70;
-                } else {
-                    let n2 = nodes.find(nn => nn.id === connTarget);
-                    t = parseFloat(n2.top) + 90;
-                    l = parseFloat(n2.left) + 90;
-                }
-                if (n) {
-                    n.top = `${t}px`;
-                    n.left = `${l}px`;
-                    setNodes(nodes);
-                }
+                // Move node close to target and distribute around in flower pattern
+                distributeAroundTarget(thisId, connTarget);
             }
             setConnections(connections);
 
@@ -224,6 +226,42 @@ function showNodeForm(editNode = null) {
             saveNode();
         }
     };
+}
+
+function distributeAroundTarget(nodeId, targetId) {
+    // Find all nodes connected to targetId (as a group or node)
+    const connected = [];
+    nodes.forEach(n => {
+        if (n.id === nodeId) return;
+        const conns = connections.filter(c => 
+            (c.type === 'node' && (c.from === n.id && c.to === targetId || c.to === n.id && c.from === targetId)) ||
+            (c.type === 'group' && c.group === targetId && c.node === n.id)
+        );
+        if (conns.length) connected.push(n);
+    });
+    // Also add the editing node
+    connected.push(nodes.find(n => n.id === nodeId));
+    // Get target position
+    let t, l, r;
+    let isGroup = groups.find(g => g.id === targetId);
+    if (isGroup) {
+        let g = groups.find(g => g.id === targetId);
+        t = parseFloat(g.top);
+        l = parseFloat(g.left);
+        r = 60;
+    } else {
+        let n2 = nodes.find(nn => nn.id === targetId);
+        t = parseFloat(n2.top);
+        l = parseFloat(n2.left);
+        r = 110;
+    }
+    // Distribute in a circle
+    for (let i = 0; i < connected.length; ++i) {
+        const angle = (2 * Math.PI * i) / connected.length;
+        connected[i].top = `${t + Math.sin(angle) * r}px`;
+        connected[i].left = `${l + Math.cos(angle) * r}px`;
+    }
+    setNodes(nodes);
 }
 
 function showGroupForm(editGroup = null) {
@@ -345,22 +383,7 @@ function startDrag(e) {
                 c.type === "node" && ((c.from === dragData.id && c.to === targetNode.dataset.nodeId) || (c.from === targetNode.dataset.nodeId && c.to === dragData.id)))) {
                 connections.push({ type: "node", from: dragData.id, to: targetNode.dataset.nodeId });
                 setConnections(connections);
-                nodes = nodes.map(n => {
-                    if (n.id === dragData.id || n.id === targetNode.dataset.nodeId) {
-                        n.floating = false;
-                        const other = nodes.find(nn => nn.id === (n.id === dragData.id ? targetNode.dataset.nodeId : dragData.id));
-                        if (other) {
-                            let t1 = parseFloat(n.top), l1 = parseFloat(n.left);
-                            let t2 = parseFloat(other.top), l2 = parseFloat(other.left);
-                            const newTop = t1 + 0.35 * (t2 - t1);
-                            const newLeft = l1 + 0.35 * (l2 - l1);
-                            n.top = `${newTop}px`;
-                            n.left = `${newLeft}px`;
-                        }
-                    }
-                    return n;
-                });
-                setNodes(nodes);
+                distributeAroundTarget(dragData.id, targetNode.dataset.nodeId);
             }
         }
         if (!dragData.isGroup && targetGroup) {
@@ -368,19 +391,7 @@ function startDrag(e) {
                 const group = groups.find(g => g.id === targetGroup.dataset.groupId);
                 connections.push({ type: "group", group: targetGroup.dataset.groupId, node: dragData.id, color: group.color });
                 setConnections(connections);
-                nodes = nodes.map(n => {
-                    if (n.id === dragData.id) {
-                        n.floating = false;
-                        let t1 = parseFloat(n.top), l1 = parseFloat(n.left);
-                        let t2 = parseFloat(group.top), l2 = parseFloat(group.left);
-                        const newTop = t1 + 0.35 * (t2 - t1);
-                        const newLeft = l1 + 0.35 * (l2 - l1);
-                        n.top = `${newTop}px`;
-                        n.left = `${newLeft}px`;
-                    }
-                    return n;
-                });
-                setNodes(nodes);
+                distributeAroundTarget(dragData.id, targetGroup.dataset.groupId);
             }
         }
         if (!dragData.isGroup) {
@@ -443,14 +454,28 @@ function floatNodesWithGravity() {
             n.top = `${t}px`; n.left = `${l}px`;
         }
         if (target) {
-            let t1 = parseFloat(n.top), l1 = parseFloat(n.left);
-            let t2 = parseFloat(target.top), l2 = parseFloat(target.left);
-            const dx = l2 - l1, dy = t2 - t1;
-            const dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
-            if (dist > 60) {
-                const step = Math.min(0.13 + Math.log(dist+1)/40, 0.21);
-                n.top = `${t1 + dy*step}px`;
-                n.left = `${l1 + dx*step}px`;
+            // Distribute all nodes that share connection to this target
+            const targetId = target.id;
+            const connected = [];
+            nodes.forEach(other => {
+                if (other.id !== targetId) {
+                    const connectedToTarget = connections.some(
+                        c =>
+                            (c.type === 'node' && ((c.from === other.id && c.to === targetId) || (c.to === other.id && c.from === targetId))) ||
+                            (c.type === 'group' && c.node === other.id && c.group === targetId)
+                    );
+                    if (connectedToTarget) connected.push(other);
+                }
+            });
+            if (connected.length > 0) {
+                connected.push(target);
+                for (let i = 0; i < connected.length; ++i) {
+                    if (connected[i].id === targetId) continue;
+                    const angle = (2 * Math.PI * (i-1)) / (connected.length-1);
+                    let r = targetId.startsWith('g') ? 60 : 110;
+                    connected[i].top = `${parseFloat(target.top) + Math.sin(angle) * r}px`;
+                    connected[i].left = `${parseFloat(target.left) + Math.cos(angle) * r}px`;
+                }
             }
         }
         const dom = document.querySelector(`.node[data-node-id="${n.id}"]`);
