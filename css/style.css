@@ -16,15 +16,16 @@ body {
 
 #hero {
     background: linear-gradient(to bottom, #ceb7fa 0%, #f7f7fb 100%);
-    padding: 44px 0 64px 0;
+    padding: 44px 0 32px 0; /* less bottom padding */
     width: 100vw;
-    border-radius: 0 0 38px 38px;
+    border-radius: 0 0 28px 28px; /* less curve */
     position: relative;
     z-index: 10;
     overflow: visible;
-    box-shadow: 0 16px 32px 0 #ceb7fa22;
-    min-height: 450px;
+    box-shadow: 0 10px 24px 0 #ceb7fa22;
+    min-height: unset;
 }
+
 .hero-content {
     max-width: 600px;
     margin: 0 auto;
@@ -33,33 +34,6 @@ body {
     position: relative;
     z-index: 2;
 }
-#demo-bg {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    top: 0;
-    width: 100vw;
-    height: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 1;
-    transition: opacity 0.7s;
-}
-#demo-bg img {
-    width: 100vw;
-    max-width: 1080px;
-    height: auto;
-    opacity: 0.94;
-    object-fit: contain;
-    border-radius: 0 0 38px 38px;
-}
-#demo-bg.hide {
-    opacity: 0;
-    pointer-events: none;
-}
-
 .brand {
     font-weight: bold;
     font-size: 1.4rem;
@@ -153,16 +127,18 @@ main {
     box-shadow: 0 4px 16px #f6c94a44;
 }
 
+/* RESPONSIVE FORM MODAL */
 .form-modal {
     position: fixed;
     left: 50%;
-    top: 120px;
+    top: 70px;
     transform: translateX(-50%, 0);
     background: #fff;
     color: #333;
-    padding: 22px 28px 22px 28px;
-    width: 320px;
-    border-radius: 15px;
+    padding: 18px 14px 16px 14px;
+    width: 96vw;
+    max-width: 340px;
+    border-radius: 13px;
     box-shadow: 0 6px 28px 2px #bbb;
     z-index: 50;
     transition: all 0.2s;
@@ -174,7 +150,7 @@ main {
     margin: 0 0 17px 0;
     text-align: center;
     color: #7a58d7;
-    font-size: 1.23rem;
+    font-size: 1.13rem;
     font-weight: 700;
     letter-spacing: 0.01em;
 }
@@ -183,16 +159,23 @@ main {
     margin: 10px 0 0 0;
     font-size: 1rem;
 }
-.form-modal input[type="text"], .form-modal input[type="file"], .form-modal select {
-    width: 96%;
+.form-modal input[type="text"],
+.form-modal input[type="file"],
+.form-modal select {
+    width: 98%;
     margin-top: 4px;
     margin-bottom: 8px;
-    padding: 8px;
+    padding: 9px;
     border-radius: 7px;
     border: 1px solid #ddd;
     font-size: 1rem;
     background: #f6f6f6;
     color: #333;
+    box-sizing: border-box;
+}
+.form-modal input[type="text"]::placeholder {
+    color: #bbb;
+    font-size: 1rem;
 }
 .submit-btn {
     margin-top: 12px;
@@ -220,6 +203,7 @@ main {
     z-index: 2;
     user-select: none;
     transition: box-shadow 0.2s;
+    touch-action: manipulation;
 }
 
 .node .circle {
@@ -336,8 +320,10 @@ main {
 
 @media (max-width: 700px) {
     #hero h1 { font-size: 1.3rem; }
-    .form-modal { width: 96vw; left: 2vw; }
+    #hero { padding: 30px 0 16px 0; border-radius: 0 0 18px 18px; }
+    .form-modal { width: 99vw; left: 0.5vw; max-width: 99vw; top: 30px; padding: 11px 3vw 11px 3vw; }
     #floating-buttons { bottom: 12px; gap: 12px; }
     .fab { width: 44px; height: 44px; font-size: 1.3rem; }
-    #demo-bg img { width: 100vw; }
+    #nodes-container { touch-action: manipulation; }
+    .node .node-label, .group-node .group-label { width: 96vw; max-width: 130px; font-size: 1rem; }
 }

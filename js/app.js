@@ -22,7 +22,6 @@ function render() {
     enableDragAndDrop();
 }
 
-// Start: show builder UI
 document.getElementById('get-started-btn').onclick = function() {
     document.getElementById('hero').style.display = 'none';
     document.getElementById('floating-buttons').classList.remove('hidden');
@@ -120,6 +119,12 @@ function getTargetColor(targetId) {
     return colorOptions[0];
 }
 
+function clearNodeFormInputs() {
+    document.getElementById('name-input').value = "";
+    document.getElementById('job-title-input').value = "";
+    document.getElementById('image-upload').value = "";
+}
+
 function showNodeForm(editNode = null) {
     inputForm.classList.remove('hidden');
     groupForm.classList.add('hidden');
@@ -135,7 +140,6 @@ function showNodeForm(editNode = null) {
         document.getElementById('name-input').value = editNode.name;
         document.getElementById('job-title-input').value = editNode.jobTitle;
         document.getElementById('image-upload').value = "";
-        // Find current connection for this node (if any)
         const conn = connections.find(c => 
             (c.type === 'node' && (c.from === editNode.id || c.to === editNode.id)) ||
             (c.type === 'group' && c.node === editNode.id)
@@ -147,13 +151,10 @@ function showNodeForm(editNode = null) {
                 : conn.group)
             : "";
     } else {
-        document.getElementById('name-input').value = "";
-        document.getElementById('job-title-input').value = "";
-        document.getElementById('image-upload').value = "";
+        clearNodeFormInputs();
     }
     buildConnectionDropdown(currentConnId, editingNodeId);
 
-    // If editing and connection exists, set color to target automatically
     document.getElementById('connection-select').onchange = function() {
         const val = this.value;
         if (val) {
@@ -223,7 +224,6 @@ function showNodeForm(editNode = null) {
 }
 
 function distributeAroundTarget(nodeId, targetId) {
-    // Find all nodes connected to targetId (as a group or node)
     const connected = [];
     nodes.forEach(n => {
         if (n.id === nodeId) return;
@@ -233,9 +233,7 @@ function distributeAroundTarget(nodeId, targetId) {
         );
         if (conns.length) connected.push(n);
     });
-    // Also add the editing node
     connected.push(nodes.find(n => n.id === nodeId));
-    // Get target position
     let t, l, r;
     let isGroup = groups.find(g => g.id === targetId);
     if (isGroup) {
@@ -249,7 +247,6 @@ function distributeAroundTarget(nodeId, targetId) {
         l = parseFloat(n2.left);
         r = 110;
     }
-    // Distribute in a circle
     for (let i = 0; i < connected.length; ++i) {
         const angle = (2 * Math.PI * i) / connected.length;
         connected[i].top = `${t + Math.sin(angle) * r}px`;
@@ -296,7 +293,6 @@ function showGroupForm(editGroup = null) {
             const group = { id, name: groupName, color: groupColor, top, left };
             groups.push(group);
             setGroups(groups);
-            // Optionally connect to main if exists:
             if (nodes.length > 0) {
                 const userId = nodes[0].id;
                 connections.push({ type: "group2user", group: id, user: userId, color: groupColor });
@@ -308,7 +304,18 @@ function showGroupForm(editGroup = null) {
     };
 }
 
+// SINGLE-CLICK: open edit
 document.getElementById('nodes-container').addEventListener('click', function(e) {
+    const nodeEl = e.target.closest('.node');
+    if (nodeEl) {
+        const nodeId = nodeEl.dataset.nodeId;
+        const node = nodes.find(n => n.id === nodeId);
+        showNodeForm(node);
+    }
+}, true);
+
+// DOUBLE-CLICK: open edit (also on mobile via dbltap)
+document.getElementById('nodes-container').addEventListener('dblclick', function(e) {
     const nodeEl = e.target.closest('.node');
     if (nodeEl) {
         const nodeId = nodeEl.dataset.nodeId;
@@ -448,7 +455,6 @@ function floatNodesWithGravity() {
             n.top = `${t}px`; n.left = `${l}px`;
         }
         if (target) {
-            // Distribute all nodes that share connection to this target
             const targetId = target.id;
             const connected = [];
             nodes.forEach(other => {
