@@ -22,31 +22,26 @@ function render() {
     enableDragAndDrop();
 }
 
-// Demo background fade out on start
+// Start: show builder UI
 document.getElementById('get-started-btn').onclick = function() {
-    document.getElementById('hero').style.display = 'block';
-    const demoBg = document.getElementById('demo-bg');
-    demoBg.classList.add('hide');
-    setTimeout(() => {
-        document.getElementById('hero').style.display = 'none';
-        document.getElementById('floating-buttons').classList.remove('hidden');
-        nodes = getNodes();
-        if (!nodes || nodes.length === 0) {
-            const width = window.innerWidth, height = window.innerHeight;
-            const node = {
-                id: "main-user",
-                name: "You",
-                jobTitle: "Your Title",
-                color: colorOptions[0],
-                image: "",
-                top: `${height/2 - 63}px`,
-                left: `${width/2 - 63}px`,
-                floating: false
-            };
-            setNodes([node]);
-            render();
-        }
-    }, 700);
+    document.getElementById('hero').style.display = 'none';
+    document.getElementById('floating-buttons').classList.remove('hidden');
+    nodes = getNodes();
+    if (!nodes || nodes.length === 0) {
+        const width = window.innerWidth, height = window.innerHeight;
+        const node = {
+            id: "main-user",
+            name: "You",
+            jobTitle: "Your Title",
+            color: colorOptions[0],
+            image: "",
+            top: `${height/2 - 63}px`,
+            left: `${width/2 - 63}px`,
+            floating: false
+        };
+        setNodes([node]);
+        render();
+    }
 };
 
 const addNodeFab = document.getElementById('add-node-fab');
@@ -96,11 +91,11 @@ function buildColorPicker(containerId, currentColor, onPick) {
     });
 }
 
-function buildConnectionDropdown(selectedId) {
+function buildConnectionDropdown(selectedId, skipId) {
     const select = document.getElementById('connection-select');
     select.innerHTML = '<option value="">None</option>';
     nodes.forEach(n => {
-        if (n.id !== editingNodeId) {
+        if (n.id !== skipId) {
             const opt = document.createElement('option');
             opt.value = n.id;
             opt.textContent = n.name + (n.jobTitle ? ' (' + n.jobTitle + ')' : '');
@@ -129,8 +124,8 @@ function showNodeForm(editNode = null) {
     inputForm.classList.remove('hidden');
     groupForm.classList.add('hidden');
     editingNodeId = editNode ? editNode.id : null;
-    document.getElementById('form-title').textContent = editNode ? 'Edit Node' : 'Add a Node';
-    document.getElementById('add-node-btn').textContent = editNode ? 'Update Node' : 'Add Node';
+    document.getElementById('form-title').textContent = 'Edit Node';
+    document.getElementById('add-node-btn').textContent = 'Save Node';
 
     let nodeColor = editNode ? editNode.color : colorOptions[0];
     buildColorPicker('color-picker', nodeColor, (picked) => { nodeColor = picked; });
@@ -156,7 +151,7 @@ function showNodeForm(editNode = null) {
         document.getElementById('job-title-input').value = "";
         document.getElementById('image-upload').value = "";
     }
-    buildConnectionDropdown(currentConnId);
+    buildConnectionDropdown(currentConnId, editingNodeId);
 
     // If editing and connection exists, set color to target automatically
     document.getElementById('connection-select').onchange = function() {
@@ -206,7 +201,6 @@ function showNodeForm(editNode = null) {
                 } else {
                     connections.push({ type: "node", from: thisId, to: connTarget });
                 }
-                // Move node close to target and distribute around in flower pattern
                 distributeAroundTarget(thisId, connTarget);
             }
             setConnections(connections);
