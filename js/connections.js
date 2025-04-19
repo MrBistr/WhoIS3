@@ -23,12 +23,9 @@ export function drawConnections(nodes, groups) {
     });
     const connections = getConnections();
     connections.forEach(conn => {
-        let color = "#888";
-        let thickness = 5;
+        let color = "#a690e1";
+        let thickness = 4;
         if (conn.type === "node") {
-            // Use color of source node
-            const srcNode = nodes.find(n => n.id === conn.from);
-            color = srcNode ? srcNode.color : "#888";
             const from = nodeMap[conn.from];
             const to = nodeMap[conn.to];
             if (from && to) {
@@ -36,7 +33,7 @@ export function drawConnections(nodes, groups) {
             }
         }
         if (conn.type === "group") {
-            color = conn.color;
+            color = conn.color || "#f6c94a";
             const from = groupMap[conn.group];
             const to = nodeMap[conn.node];
             if (from && to) {
@@ -44,8 +41,7 @@ export function drawConnections(nodes, groups) {
             }
         }
         if (conn.type === "group2user") {
-            // Use group color
-            color = conn.color;
+            color = conn.color || "#f6c94a";
             const from = nodeMap[conn.user];
             const to = groupMap[conn.group];
             if (from && to) {

@@ -9,16 +9,20 @@
 </head>
 <body>
     <div id="app">
-        <div id="nodes-container"></div>
-        <div id="floating-buttons">
-            <div>
-                <button id="add-node-fab" class="fab add-node" title="Add Node">+</button>
-                <div class="fab-label">Button to add a NODE</div>
+        <header id="hero">
+            <div class="hero-content">
+                <div class="brand">OurTeam</div>
+                <h1>Discover Our Team Network</h1>
+                <p>Experience the expertise of our professionals as they connect, collaborate, and help bring your ideas to fruition.</p>
+                <button id="get-started-btn" class="cta-btn">Start Your Own Network</button>
             </div>
-            <div>
-                <button id="add-group-btn" class="fab add-group" title="Add Group">G</button>
-                <div class="fab-label">Button to add a GROUP</div>
-            </div>
+        </header>
+        <main>
+            <div id="nodes-container"></div>
+        </main>
+        <div id="floating-buttons" class="hidden">
+            <button id="add-node-fab" class="fab add-node" title="Add Node">+</button>
+            <button id="add-group-btn" class="fab add-group" title="Add Group">&#128101;</button>
         </div>
         <!-- Add Node Form -->
         <div id="input-form" class="hidden form-modal">
