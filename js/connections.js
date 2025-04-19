@@ -27,7 +27,7 @@ export function drawConnections(nodes, groups) {
             const from = nodeMap[conn.from];
             const to = nodeMap[conn.to];
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color: 'white', size: 2 }));
+                lines.push(new LeaderLine(from, to, { color: '#b48ffa', size: 2 }));
             }
         }
         if (conn.type === "group") {
@@ -41,7 +41,7 @@ export function drawConnections(nodes, groups) {
             const from = nodeMap[conn.user];
             const to = groupMap[conn.group];
             if (from && to) {
-                lines.push(new LeaderLine(from, to, { color: conn.color, size: 2 }));
+                lines.push(new LeaderLine(from, to, { color: conn.color || "#b48ffa", size: 2 }));
             }
         }
     });
