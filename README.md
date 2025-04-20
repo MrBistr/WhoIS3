@@ -1,6 +1,6 @@
 # YouSocialMap — Визуальный AI-помощник для адаптации в команде
 
-![Пример социальной карты](img/socialmap-demo-preview.png)
+![Пример социальной карты](img/socialmap-demo-project.png)
 
 ## Проблема
 
