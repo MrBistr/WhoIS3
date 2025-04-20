@@ -1,4 +1,4 @@
-# AI MindMap — Визуальный AI-помощник для адаптации в команде
+# YouSocialMap — Визуальный AI-помощник для адаптации в команде
 
 ![Пример социальной карты](img/socialmap-demo-preview.png)
 
@@ -75,4 +75,4 @@
 **Контакты:**  
 Александр Бистров  
 [GitHub: MrBistr](https://github.com/MrBistr)  
-Demo: [ссылка на демо, если есть]  
+Demo: https://mrbistr.github.io/WhoIS3/ 
