@@ -239,6 +239,8 @@ function showNodeForm(editNode = null) {
     };
 }
 
+window.showNodeForm = showNodeForm;
+
 function showGroupForm(editGroup = null) {
     groupForm.classList.remove('hidden');
     inputForm.classList.add('hidden');
@@ -302,17 +304,7 @@ function showGroupForm(editGroup = null) {
     };
 }
 
-document.getElementById('nodes-container').addEventListener('click', function(e) {
-    // Only handle clicks that are NOT on edit buttons
-    const editBtn = e.target.closest('.edit-btn');
-    if (editBtn) return;
-}, true);
-
-document.getElementById('nodes-container').addEventListener('dblclick', function(e) {
-    // Only handle double clicks that are NOT on edit buttons
-    const editBtn = e.target.closest('.edit-btn');
-    if (editBtn) return;
-}, true);
+window.showGroupForm = showGroupForm;
 
 // Canvas panning logic
 const nodesContainer = document.getElementById('nodes-container');
@@ -353,7 +345,7 @@ function onCanvasPanMove(ev) {
     }
     const dx = x - canvasPan.lastX;
     const dy = y - canvasPan.lastY;
-    // Move all nodes and groups by dx/dy
+    // Move all nodes and groups by dx/dy except the main node
     nodes = getNodes().map(n => {
         if (n.id === "main-user") return n;
         return {
@@ -438,8 +430,8 @@ function startDrag(e) {
             y = ev.clientY;
         }
         const dropTarget = document.elementFromPoint(x, y);
-        const targetNode = dropTarget.closest('.node');
-        const targetGroup = dropTarget.closest('.group-node');
+        const targetNode = dropTarget && dropTarget.closest('.node');
+        const targetGroup = dropTarget && dropTarget.closest('.group-node');
         if (!dragData.isGroup && targetNode && targetNode.dataset.nodeId !== dragData.id) {
             if (!connections.find(c =>
                 c.type === "node" && ((c.from === dragData.id && c.to === targetNode.dataset.nodeId) || (c.from === targetNode.dataset.nodeId && c.to === dragData.id)))) {
