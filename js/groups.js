@@ -21,6 +21,21 @@ export function createGroupDOM(group, isSelected) {
     const circle = document.createElement('div');
     circle.className = 'circle';
     circle.style.borderColor = group.color;
+
+    // EDIT BUTTON
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn';
+    editBtn.title = "Edit";
+    editBtn.innerHTML = `
+      <svg viewBox="0 0 24 24"><rect width="24" height="24" fill="none"/><path d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm14.71-9.04c.18-.18.29-.43.29-.71s-.11-.53-.29-.71l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#fff" stroke="#a95e00" stroke-width="1.2"/></svg>
+    `;
+    editBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        window.showGroupForm(group);
+    };
+    circle.appendChild(editBtn);
+
     el.appendChild(circle);
 
     const label = document.createElement('div');

@@ -25,7 +25,7 @@ export function drawConnections(nodes, groups) {
     connections.forEach(conn => {
         let color = "#a690e1";
         let thickness = 4;
-        let dash = { dot: true }; // Dotted line for all connections
+        let dash = { dot: true };
         if (conn.type === "node") {
             const from = nodeMap[conn.from];
             const to = nodeMap[conn.to];

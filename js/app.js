@@ -9,6 +9,7 @@ let selectedNodeId = null;
 let selectedGroupId = null;
 let editingNodeId = null;
 let editingGroupId = null;
+let canvasPan = { active: false, lastX: 0, lastY: 0, offsetX: 0, offsetY: 0 };
 
 function render() {
     clearNodes();
@@ -221,38 +222,21 @@ function showNodeForm(editNode = null) {
             saveNode();
         }
     };
-}
 
-function distributeAroundTarget(nodeId, targetId) {
-    const connected = [];
-    nodes.forEach(n => {
-        if (n.id === nodeId) return;
-        const conns = connections.filter(c => 
-            (c.type === 'node' && (c.from === n.id && c.to === targetId || c.to === n.id && c.from === targetId)) ||
-            (c.type === 'group' && c.group === targetId && c.node === n.id)
+    document.getElementById('delete-node-btn').onclick = function() {
+        if (!editingNodeId) return;
+        if (!confirm("Are you sure you want to delete this node?")) return;
+        nodes = nodes.filter(n => n.id !== editingNodeId);
+        connections = getConnections().filter(c =>
+            !((c.type === 'node' && (c.from === editingNodeId || c.to === editingNodeId)) ||
+            (c.type === 'group' && c.node === editingNodeId))
         );
-        if (conns.length) connected.push(n);
-    });
-    connected.push(nodes.find(n => n.id === nodeId));
-    let t, l, r;
-    let isGroup = groups.find(g => g.id === targetId);
-    if (isGroup) {
-        let g = groups.find(g => g.id === targetId);
-        t = parseFloat(g.top);
-        l = parseFloat(g.left);
-        r = 60;
-    } else {
-        let n2 = nodes.find(nn => nn.id === targetId);
-        t = parseFloat(n2.top);
-        l = parseFloat(n2.left);
-        r = 110;
-    }
-    for (let i = 0; i < connected.length; ++i) {
-        const angle = (2 * Math.PI * i) / connected.length;
-        connected[i].top = `${t + Math.sin(angle) * r}px`;
-        connected[i].left = `${l + Math.cos(angle) * r}px`;
-    }
-    setNodes(nodes);
+        setNodes(nodes);
+        setConnections(connections);
+        inputForm.classList.add('hidden');
+        editingNodeId = null;
+        render();
+    };
 }
 
 function showGroupForm(editGroup = null) {
@@ -302,34 +286,111 @@ function showGroupForm(editGroup = null) {
             render();
         }
     };
+
+    document.getElementById('delete-group-btn').onclick = function() {
+        if (!editingGroupId) return;
+        if (!confirm("Are you sure you want to delete this group?")) return;
+        groups = groups.filter(g => g.id !== editingGroupId);
+        connections = getConnections().filter(c =>
+            !((c.type === 'group' && c.group === editingGroupId) || (c.type === 'group2user' && c.group === editingGroupId))
+        );
+        setGroups(groups);
+        setConnections(connections);
+        groupForm.classList.add('hidden');
+        editingGroupId = null;
+        render();
+    };
 }
 
-// SINGLE-CLICK: open edit
 document.getElementById('nodes-container').addEventListener('click', function(e) {
-    const nodeEl = e.target.closest('.node');
-    if (nodeEl) {
-        const nodeId = nodeEl.dataset.nodeId;
-        const node = nodes.find(n => n.id === nodeId);
-        showNodeForm(node);
-    }
+    // Only handle clicks that are NOT on edit buttons
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) return;
 }, true);
 
-// DOUBLE-CLICK: open edit (also on mobile via dbltap)
 document.getElementById('nodes-container').addEventListener('dblclick', function(e) {
-    const nodeEl = e.target.closest('.node');
-    if (nodeEl) {
-        const nodeId = nodeEl.dataset.nodeId;
-        const node = nodes.find(n => n.id === nodeId);
-        showNodeForm(node);
-    }
+    // Only handle double clicks that are NOT on edit buttons
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) return;
 }, true);
 
+// Canvas panning logic
+const nodesContainer = document.getElementById('nodes-container');
+nodesContainer.addEventListener('mousedown', onCanvasPanStart);
+nodesContainer.addEventListener('touchstart', onCanvasPanStart);
+let isDraggingNodeOrGroup = false;
+function onCanvasPanStart(e) {
+    // Ignore if starting on node/group or their edit button or any button
+    if (e.target.closest('.node') || e.target.closest('.group-node') || e.target.closest('.fab') || e.target.closest('.edit-btn')) {
+        isDraggingNodeOrGroup = true;
+        return;
+    }
+    isDraggingNodeOrGroup = false;
+    e.preventDefault();
+    canvasPan.active = true;
+    nodesContainer.classList.add('grabbing');
+    if (e.type === 'touchstart') {
+        canvasPan.lastX = e.touches[0].clientX;
+        canvasPan.lastY = e.touches[0].clientY;
+    } else {
+        canvasPan.lastX = e.clientX;
+        canvasPan.lastY = e.clientY;
+    }
+    document.addEventListener('mousemove', onCanvasPanMove);
+    document.addEventListener('mouseup', onCanvasPanEnd);
+    document.addEventListener('touchmove', onCanvasPanMove);
+    document.addEventListener('touchend', onCanvasPanEnd);
+}
+function onCanvasPanMove(ev) {
+    if (!canvasPan.active) return;
+    let x, y;
+    if (ev.type.startsWith('touch')) {
+        x = ev.touches[0].clientX;
+        y = ev.touches[0].clientY;
+    } else {
+        x = ev.clientX;
+        y = ev.clientY;
+    }
+    const dx = x - canvasPan.lastX;
+    const dy = y - canvasPan.lastY;
+    // Move all nodes and groups by dx/dy
+    nodes = getNodes().map(n => {
+        if (n.id === "main-user") return n;
+        return {
+            ...n,
+            top: `${parseFloat(n.top) + dy}px`,
+            left: `${parseFloat(n.left) + dx}px`
+        };
+    });
+    groups = getGroups().map(g => ({
+        ...g,
+        top: `${parseFloat(g.top) + dy}px`,
+        left: `${parseFloat(g.left) + dx}px`
+    }));
+    setNodes(nodes);
+    setGroups(groups);
+    render();
+    canvasPan.lastX = x;
+    canvasPan.lastY = y;
+}
+function onCanvasPanEnd() {
+    canvasPan.active = false;
+    nodesContainer.classList.remove('grabbing');
+    document.removeEventListener('mousemove', onCanvasPanMove);
+    document.removeEventListener('mouseup', onCanvasPanEnd);
+    document.removeEventListener('touchmove', onCanvasPanMove);
+    document.removeEventListener('touchend', onCanvasPanEnd);
+}
+
+// Enable drag for nodes/groups
 function enableDragAndDrop() {
     document.querySelectorAll('.node:not(.main), .group-node').forEach(nodeEl => {
         nodeEl.onmousedown = startDrag;
         nodeEl.ontouchstart = startDrag;
     });
 }
+
+// Drag logic for nodes/groups
 let dragData = null;
 function startDrag(e) {
     e.preventDefault();
@@ -419,71 +480,36 @@ function startDrag(e) {
     document.addEventListener('touchend', onUp);
 }
 
-// Magnetic/Gravitational pull animation
-function floatNodesWithGravity() {
-    if (nodes.length === 0) return;
-    nodes = getNodes();
-    connections = getConnections();
-    if (nodes[0]) {
-        nodes[0].top = `${window.innerHeight/2 - 63}px`;
-        nodes[0].left = `${window.innerWidth/2 - 63}px`;
-    }
-    nodes.forEach((n, idx) => {
-        if (idx === 0) return;
-        let target = null;
-        let conn = connections.find(c =>
-            (c.type === 'group' && c.node === n.id) ||
-            (c.type === 'node' && c.to === n.id) ||
-            (c.type === 'node' && c.from === n.id) ||
-            (c.type === 'group2user' && c.user === n.id)
+function distributeAroundTarget(nodeId, targetId) {
+    const connected = [];
+    nodes.forEach(n => {
+        if (n.id === nodeId) return;
+        const conns = connections.filter(c => 
+            (c.type === 'node' && (c.from === n.id && c.to === targetId || c.to === n.id && c.from === targetId)) ||
+            (c.type === 'group' && c.group === targetId && c.node === n.id)
         );
-        if (conn) {
-            if (conn.type === 'group') {
-                const group = groups.find(g => g.id === conn.group);
-                if (group) target = group;
-            } else if (conn.type === 'node') {
-                const otherId = conn.from === n.id ? conn.to : conn.from;
-                const other = nodes.find(nn => nn.id === otherId);
-                if (other) target = other;
-            } else if (conn.type === 'group2user') {
-                target = nodes[0];
-            }
-        } else {
-            let t = parseFloat(n.top), l = parseFloat(n.left);
-            t += Math.sin(Date.now()/250 + l)*0.7;
-            l += Math.cos(Date.now()/350 + t)*0.7;
-            n.top = `${t}px`; n.left = `${l}px`;
-        }
-        if (target) {
-            const targetId = target.id;
-            const connected = [];
-            nodes.forEach(other => {
-                if (other.id !== targetId) {
-                    const connectedToTarget = connections.some(
-                        c =>
-                            (c.type === 'node' && ((c.from === other.id && c.to === targetId) || (c.to === other.id && c.from === targetId))) ||
-                            (c.type === 'group' && c.node === other.id && c.group === targetId)
-                    );
-                    if (connectedToTarget) connected.push(other);
-                }
-            });
-            if (connected.length > 0) {
-                connected.push(target);
-                for (let i = 0; i < connected.length; ++i) {
-                    if (connected[i].id === targetId) continue;
-                    const angle = (2 * Math.PI * (i-1)) / (connected.length-1);
-                    let r = targetId.startsWith('g') ? 60 : 110;
-                    connected[i].top = `${parseFloat(target.top) + Math.sin(angle) * r}px`;
-                    connected[i].left = `${parseFloat(target.left) + Math.cos(angle) * r}px`;
-                }
-            }
-        }
-        const dom = document.querySelector(`.node[data-node-id="${n.id}"]`);
-        if(dom && !dom.classList.contains('dragging')) { dom.style.top = n.top; dom.style.left = n.left; }
+        if (conns.length) connected.push(n);
     });
+    connected.push(nodes.find(n => n.id === nodeId));
+    let t, l, r;
+    let isGroup = groups.find(g => g.id === targetId);
+    if (isGroup) {
+        let g = groups.find(g => g.id === targetId);
+        t = parseFloat(g.top);
+        l = parseFloat(g.left);
+        r = 60;
+    } else {
+        let n2 = nodes.find(nn => nn.id === targetId);
+        t = parseFloat(n2.top);
+        l = parseFloat(n2.left);
+        r = 110;
+    }
+    for (let i = 0; i < connected.length; ++i) {
+        const angle = (2 * Math.PI * i) / connected.length;
+        connected[i].top = `${t + Math.sin(angle) * r}px`;
+        connected[i].left = `${l + Math.cos(angle) * r}px`;
+    }
     setNodes(nodes);
-    setTimeout(floatNodesWithGravity, 38);
 }
-floatNodesWithGravity();
 
 window.onload = render;

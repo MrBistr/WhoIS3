@@ -43,7 +43,10 @@
                     <option value="">None</option>
                 </select>
             </label>
-            <button id="add-node-btn" class="submit-btn">Save Node</button>
+            <div class="form-btn-row">
+                <button id="add-node-btn" class="submit-btn">Save Node</button>
+                <button id="delete-node-btn" class="delete-btn" type="button">Delete</button>
+            </div>
         </div>
         <!-- Add/Edit Group Form -->
         <div id="group-form" class="hidden form-modal">
@@ -53,7 +56,10 @@
             </label>
             <div id="group-color-picker-label">Color:</div>
             <div id="group-color-picker"></div>
-            <button id="create-group-btn" class="submit-btn">Create Group</button>
+            <div class="form-btn-row">
+                <button id="create-group-btn" class="submit-btn">Create Group</button>
+                <button id="delete-group-btn" class="delete-btn" type="button">Delete</button>
+            </div>
         </div>
     </div>
     <script src="https://anseki.github.io/leader-line/leader-line.min.js"></script>

@@ -16,9 +16,9 @@ body {
 
 #hero {
     background: linear-gradient(to bottom, #ceb7fa 0%, #f7f7fb 100%);
-    padding: 44px 0 32px 0; /* less bottom padding */
+    padding: 44px 0 32px 0;
     width: 100vw;
-    border-radius: 0 0 28px 28px; /* less curve */
+    border-radius: 0 0 28px 28px;
     position: relative;
     z-index: 10;
     overflow: visible;
@@ -86,6 +86,11 @@ main {
     overflow: hidden;
     z-index: 1;
     background: transparent;
+    cursor: grab;
+}
+
+#nodes-container.grabbing {
+    cursor: grabbing;
 }
 
 #floating-buttons {
@@ -177,9 +182,14 @@ main {
     color: #bbb;
     font-size: 1rem;
 }
+.form-btn-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+}
 .submit-btn {
-    margin-top: 12px;
-    width: 100%;
+    flex: 1 1 65%;
     padding: 10px;
     background: #8d6be9;
     color: white;
@@ -189,9 +199,27 @@ main {
     cursor: pointer;
     font-weight: 600;
     letter-spacing: 0.01em;
+    margin-right: 2px;
 }
+.delete-btn {
+    flex: 1 1 35%;
+    padding: 10px;
+    background: #fff3d6;
+    color: #a95e00;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    cursor: pointer;
+    font-weight: 600;
+    border: 1px solid #ffcc55;
+    margin-left: 2px;
+    transition: background 0.17s;
+}
+.delete-btn:hover {
+    background: #ffe6a3;
+}
+
 #group-form .submit-btn { background: #f6c94a; color: #7848d5; }
-.submit-btn:hover { background: #6f53c9; }
 #group-form .submit-btn:hover { background: #e9b800; }
 
 .node, .group-node {
@@ -217,6 +245,7 @@ main {
     justify-content: center;
     transition: border-color 0.2s, box-shadow 0.2s;
     box-shadow: 0 6px 24px #c0b6e133;
+    position: relative;
 }
 
 .node .circle img {
@@ -237,6 +266,7 @@ main {
     justify-content: center;
     transition: border-color 0.2s, box-shadow 0.2s;
     box-shadow: 0 3px 10px #c0b6e133;
+    position: relative;
 }
 
 .node.selected .circle,
@@ -288,6 +318,34 @@ main {
 .node.dragging, .group-node.dragging {
     opacity: 0.7;
     z-index: 999 !important;
+}
+
+.edit-btn {
+    position: absolute;
+    bottom: -17px;
+    right: -17px;
+    z-index: 10;
+    width: 34px;
+    height: 34px;
+    background: #ffc62f;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 7px #c0b6e133;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.14s;
+}
+
+.edit-btn svg {
+    width: 17px;
+    height: 17px;
+    display: block;
+}
+
+.edit-btn:hover {
+    background: #ffe6a3;
 }
 
 #color-picker-label, #group-color-picker-label {
