@@ -16,6 +16,13 @@
                 <p id="hero-desc">Experience the easy and visual way of connecting with your colleagues</p>
                 <button id="get-started-btn" class="cta-btn">Start Your Social Map</button>
             </div>
+            <div id="hero-demo-imgbox">
+                <img
+                  src="img/socialmap-demo-preview.png"
+                  alt="Example of a social map network preview"
+                  id="hero-demo-img"
+                />
+            </div>
         </header>
         <main>
             <div id="nodes-container"></div>
@@ -73,5 +80,12 @@
     </div>
     <script src="https://anseki.github.io/leader-line/leader-line.min.js"></script>
     <script type="module" src="js/app.js"></script>
+    <script>
+      // Hide demo image when starting
+      document.getElementById('get-started-btn').addEventListener('click', function() {
+        const demoImg = document.getElementById('hero-demo-imgbox');
+        if(demoImg) demoImg.style.display = "none";
+      });
+    </script>
 </body>
 </html>
