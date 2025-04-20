@@ -385,3 +385,32 @@ main {
     #nodes-container { touch-action: manipulation; }
     .node .node-label, .group-node .group-label { width: 96vw; max-width: 130px; font-size: 1rem; }
 }
+#hero-demo-imgbox {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 26px;
+    margin-bottom: -14px;
+    z-index: 2;
+    pointer-events: none;
+}
+#hero-demo-img {
+    width: 97vw;
+    max-width: 700px;
+    border-radius: 30px;
+    box-shadow: 0 8px 32px 0 #a181f822;
+    border: 2px solid #efecfa;
+    background: #fff;
+    object-fit: contain;
+    display: block;
+}
+@media (max-width: 700px) {
+    #hero-demo-img {
+        max-width: 97vw;
+        border-radius: 18px;
+    }
+    #hero-demo-imgbox {
+        margin-top: 14px;
+        margin-bottom: -8px;
+    }
+}
