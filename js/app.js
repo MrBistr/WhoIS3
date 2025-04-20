@@ -1,6 +1,7 @@
 import { getNodes, setNodes, createNodeDOM, clearNodes } from './nodes.js';
 import { getConnections, setConnections, drawConnections } from './connections.js';
 import { getGroups, setGroups, createGroupDOM, clearGroups, randomColor, colorOptions } from './groups.js';
+import { generateAiImages } from '../apiwork.js';
 
 let nodes = getNodes();
 let connections = getConnections();
@@ -124,6 +125,9 @@ function clearNodeFormInputs() {
     document.getElementById('name-input').value = "";
     document.getElementById('job-title-input').value = "";
     document.getElementById('image-upload').value = "";
+    document.getElementById('avatar-prompt').value = "";
+    document.getElementById('avatar-preview').src = "";
+    document.getElementById('avatar-preview').style.display = "none";
 }
 
 function showNodeForm(editNode = null) {
@@ -137,10 +141,18 @@ function showNodeForm(editNode = null) {
     buildColorPicker('color-picker', nodeColor, (picked) => { nodeColor = picked; });
 
     let currentConnId = "";
+    let generatedAvatarUrl = "";
+    let nodeImage = editNode && editNode.image ? editNode.image : "";
     if (editNode) {
         document.getElementById('name-input').value = editNode.name;
         document.getElementById('job-title-input').value = editNode.jobTitle;
         document.getElementById('image-upload').value = "";
+        if (editNode.image) {
+            document.getElementById('avatar-preview').src = editNode.image;
+            document.getElementById('avatar-preview').style.display = "";
+        } else {
+            document.getElementById('avatar-preview').style.display = "none";
+        }
         const conn = connections.find(c => 
             (c.type === 'node' && (c.from === editNode.id || c.to === editNode.id)) ||
             (c.type === 'group' && c.node === editNode.id)
@@ -166,61 +178,91 @@ function showNodeForm(editNode = null) {
 
     document.getElementById('name-input').focus();
 
+    // IMAGE UPLOAD PREVIEW
+    document.getElementById('image-upload').onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('avatar-preview').src = ev.target.result;
+                document.getElementById('avatar-preview').style.display = "";
+                generatedAvatarUrl = "";
+                nodeImage = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // AI IMAGE GENERATION
+    document.getElementById('generate-avatar-btn').onclick = async function() {
+        const promptInput = document.getElementById('avatar-prompt');
+        let userPrompt = promptInput.value.trim();
+        if (!userPrompt) {
+            promptInput.focus();
+            promptInput.placeholder = "Please describe this person!";
+            return;
+        }
+        const prompt = `${userPrompt}, avatar, profile picture, plain background`;
+        document.getElementById('avatar-loading').style.display = "";
+        document.getElementById('avatar-preview').style.display = "none";
+        try {
+            const images = await generateAiImages(prompt, 1, "photorealistic");
+            if (images && images[0]) {
+                generatedAvatarUrl = images[0];
+                nodeImage = generatedAvatarUrl;
+                document.getElementById('avatar-preview').src = generatedAvatarUrl;
+                document.getElementById('avatar-preview').style.display = "";
+            } else {
+                alert("No image returned from AI.");
+            }
+        } catch (e) {
+            alert("Avatar generation failed.");
+        }
+        document.getElementById('avatar-loading').style.display = "none";
+    };
+
     document.getElementById('add-node-btn').onclick = function() {
         const name = document.getElementById('name-input').value.trim();
         const jobTitle = document.getElementById('job-title-input').value.trim();
-        const fileInput = document.getElementById('image-upload');
         const connTarget = document.getElementById('connection-select').value;
         if (!name || !jobTitle) {
             alert('Please fill in all fields.');
             return;
         }
-        const saveNode = (image) => {
-            let thisId = editingNodeId;
-            if (editingNodeId) {
-                nodes = nodes.map(n =>
-                    n.id === editingNodeId ? { ...n, name, jobTitle, image: image || n.image, color: nodeColor } : n
-                );
-                setNodes(nodes);
-            } else {
-                thisId = 'n' + Date.now() + Math.floor(Math.random()*100000);
-                let top = `${Math.random() * (window.innerHeight-220) + 120}px`;
-                let left = `${Math.random() * (window.innerWidth-220) + 120}px`;
-                const node = { id: thisId, name, jobTitle, image, color: nodeColor, top, left, floating: true };
-                nodes.push(node);
-                setNodes(nodes);
-            }
-
-            // Remove old connections for this node (if editing)
-            connections = getConnections().filter(c =>
-                !((c.type === 'node' && (c.from === thisId || c.to === thisId)) ||
-                (c.type === 'group' && c.node === thisId))
+        let thisId = editingNodeId;
+        if (editingNodeId) {
+            nodes = nodes.map(n =>
+                n.id === editingNodeId ? { ...n, name, jobTitle, image: nodeImage || n.image, color: nodeColor } : n
             );
-            // Add new connection if selected
-            if (connTarget) {
-                if (groups.find(g => g.id === connTarget)) {
-                    connections.push({ type: "group", group: connTarget, node: thisId, color: groups.find(g => g.id === connTarget).color });
-                } else {
-                    connections.push({ type: "node", from: thisId, to: connTarget });
-                }
-                distributeAroundTarget(thisId, connTarget);
-            }
-            setConnections(connections);
-
-            inputForm.classList.add('hidden');
-            editingNodeId = null;
-            render();
-        };
-        if (fileInput.files && fileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                saveNode(e.target.result);
-                fileInput.value = '';
-            };
-            reader.readAsDataURL(fileInput.files[0]);
+            setNodes(nodes);
         } else {
-            saveNode();
+            thisId = 'n' + Date.now() + Math.floor(Math.random()*100000);
+            let top = `${Math.random() * (window.innerHeight-220) + 120}px`;
+            let left = `${Math.random() * (window.innerWidth-220) + 120}px`;
+            const node = { id: thisId, name, jobTitle, image: nodeImage, color: nodeColor, top, left, floating: true };
+            nodes.push(node);
+            setNodes(nodes);
         }
+
+        // Remove old connections for this node (if editing)
+        connections = getConnections().filter(c =>
+            !((c.type === 'node' && (c.from === thisId || c.to === thisId)) ||
+            (c.type === 'group' && c.node === thisId))
+        );
+        // Add new connection if selected
+        if (connTarget) {
+            if (groups.find(g => g.id === connTarget)) {
+                connections.push({ type: "group", group: connTarget, node: thisId, color: groups.find(g => g.id === connTarget).color });
+            } else {
+                connections.push({ type: "node", from: thisId, to: connTarget });
+            }
+            distributeAroundTarget(thisId, connTarget);
+        }
+        setConnections(connections);
+
+        inputForm.classList.add('hidden');
+        editingNodeId = null;
+        render();
     };
 
     document.getElementById('delete-node-btn').onclick = function() {
@@ -429,25 +471,9 @@ function startDrag(e) {
             x = ev.clientX;
             y = ev.clientY;
         }
-        const dropTarget = document.elementFromPoint(x, y);
-        const targetNode = dropTarget && dropTarget.closest('.node');
-        const targetGroup = dropTarget && dropTarget.closest('.group-node');
-        if (!dragData.isGroup && targetNode && targetNode.dataset.nodeId !== dragData.id) {
-            if (!connections.find(c =>
-                c.type === "node" && ((c.from === dragData.id && c.to === targetNode.dataset.nodeId) || (c.from === targetNode.dataset.nodeId && c.to === dragData.id)))) {
-                connections.push({ type: "node", from: dragData.id, to: targetNode.dataset.nodeId });
-                setConnections(connections);
-                distributeAroundTarget(dragData.id, targetNode.dataset.nodeId);
-            }
-        }
-        if (!dragData.isGroup && targetGroup) {
-            if (!connections.find(c => c.type === "group" && c.group === targetGroup.dataset.groupId && c.node === dragData.id)) {
-                const group = groups.find(g => g.id === targetGroup.dataset.groupId);
-                connections.push({ type: "group", group: targetGroup.dataset.groupId, node: dragData.id, color: group.color });
-                setConnections(connections);
-                distributeAroundTarget(dragData.id, targetGroup.dataset.groupId);
-            }
-        }
+        // Fix the node at dropped position
+        nodeEl.style.left = `${x - offsetX}px`;
+        nodeEl.style.top = `${y - offsetY}px`;
         if (!dragData.isGroup) {
             nodes = nodes.map(n => n.id === dragData.id ? {
                 ...n,

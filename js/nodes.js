@@ -35,7 +35,7 @@ export function createNodeDOM(node, isSelected, isMain) {
     editBtn.onclick = (ev) => {
         ev.stopPropagation();
         ev.preventDefault();
-        window.showNodeForm(node);
+        if (window.showNodeForm) window.showNodeForm(node);
     };
     circle.appendChild(editBtn);
 

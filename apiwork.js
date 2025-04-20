@@ -1,66 +1,8 @@
-// api url and token
+// apiwork.js
 const URL = "https://api.monsterapi.ai/v1/generate/txt2img";
-const TOKEN = "";
+// NOTE: In production, protect your token on a backend!
+const TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IjE3YmI0YmEzNDM1ZWExZTEyNGYxMDM3MTU4YzBkMmQ4IiwiY3JlYXRlZF9hdCI6IjIwMjUtMDQtMjBUMTg6NTA6MzYuNTg4NTY3In0.znBA4pJk0Ym6DuHGsne26x9upQwAX67HA009MAYkFCo";
 
-// importing functions to transfer images
-import { UpdateImageBox } from "./script.js";
-
-// Function to check the status of the process
-const checkStatus = async (process_id) => {
-  const options = {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      authorization: `Bearer ${TOKEN}`,
-    },
-  };
-
-  try {
-    const response = await fetch(
-      `https://api.monsterapi.ai/v1/status/${process_id}`,
-      options
-    );
-    const responseData = await response.json();
-    return responseData;
-  } catch (error) {
-    console.error("Error checking status:", error);
-    throw error; // Rethrow the error to handle it in the calling function
-  }
-};
-
-// Function to handle the result based on the process status
-export const sendProcessIdAndFetchResult = async (process_id) => {
-  try {
-    let statusResponse = await checkStatus(process_id);
-
-    while (
-      statusResponse.status === "LAUNCHING" ||
-      statusResponse.status === "IN_PROGRESS"
-    ) {
-      console.log(
-        `Status is ${statusResponse.status}. Checking again in 5 seconds...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait for 5 seconds
-      statusResponse = await checkStatus(process_id);
-    }
-
-    if (statusResponse.status === "COMPLETED") {
-      console.log("Process completed. Response =", statusResponse);
-      const ImageArray = statusResponse.result.output;
-      console.log("ImageArray =", ImageArray);
-      UpdateImageBox(ImageArray);
-    } else if (statusResponse.status === "FAILED") {
-      console.error("Process failed:", statusResponse);
-      // Handle the failure (e.g., notify the user, log the error, etc.)
-    } else {
-      console.error("Unexpected status:", statusResponse.status);
-    }
-  } catch (error) {
-    console.error("Error in sendProcessIdAndFetchResult:", error);
-  }
-};
-
-// Function to generate AI images
 export const generateAiImages = async (prompt, numberOfImages, imageStyle) => {
   const options = {
     method: "POST",
@@ -80,11 +22,36 @@ export const generateAiImages = async (prompt, numberOfImages, imageStyle) => {
   try {
     const response = await fetch(URL, options);
     const responseData = await response.json();
-    console.log("Response data =", responseData);
-    console.log("Response process ID =", responseData.process_id);
-    await sendProcessIdAndFetchResult(responseData.process_id);
-    return responseData;
+    if (!responseData.process_id) throw new Error("No process id returned");
+    return await pollForResult(responseData.process_id);
   } catch (error) {
     console.error("Error generating AI images:", error);
+    throw error;
   }
+};
+
+const pollForResult = async (process_id) => {
+  const options = {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${TOKEN}`,
+    },
+  };
+  let statusResponse;
+  for (let i = 0; i < 20; ++i) { // max ~100 sec
+    await new Promise(res => setTimeout(res, i === 0 ? 0 : 5000));
+    const response = await fetch(
+      `https://api.monsterapi.ai/v1/status/${process_id}`,
+      options
+    );
+    statusResponse = await response.json();
+    if (statusResponse.status === "COMPLETED") {
+      return statusResponse.result.output;
+    }
+    if (statusResponse.status === "FAILED") {
+      throw new Error("Generation failed");
+    }
+  }
+  throw new Error("Generation timed out");
 };

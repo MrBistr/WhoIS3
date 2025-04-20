@@ -32,7 +32,7 @@ export function createGroupDOM(group, isSelected) {
     editBtn.onclick = (ev) => {
         ev.stopPropagation();
         ev.preventDefault();
-        window.showGroupForm(group);
+        if (window.showGroupForm) window.showGroupForm(group);
     };
     circle.appendChild(editBtn);
 

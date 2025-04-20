@@ -36,6 +36,15 @@
             <label>Upload Image:
                 <input type="file" id="image-upload" accept="image/*" />
             </label>
+            <label>
+              Description for AI-generated avatar:
+              <input type="text" id="avatar-prompt" placeholder="e.g. ginger guy with glasses and beard" />
+            </label>
+            <button type="button" id="generate-avatar-btn">Generate Avatar with AI</button>
+            <div id="avatar-loading" style="display:none;">Generating...</div>
+            <div id="avatar-preview-box" style="margin-top: 6px;">
+              <img id="avatar-preview" style="display:none;max-width:90px;border-radius:50%;" />
+            </div>
             <div id="color-picker-label">Color:</div>
             <div id="color-picker"></div>
             <label>Connection:
